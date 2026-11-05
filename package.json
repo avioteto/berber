@@ -1,0 +1,13 @@
+{
+  "name": "berber-randevu",
+  "version": "1.0.0",
+  "description": "Berber online randevu sistemi (Express + JSON dosya veritabanı)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.18.0",
+    "express": "^4.19.2"
+  }
+}

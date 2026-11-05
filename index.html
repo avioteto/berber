@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Berber Ahmet — Online Randevu</title>
+<style>
+  :root{
+    --bg:#111214; --panel:#1a1c20; --panel2:#22252a;
+    --gold:#d4a017; --gold2:#f0c14b;
+    --text:#e8e6e3; --muted:#9b978f;
+    --danger:#e05252; --green:#3ecf8e;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:"Segoe UI",system-ui,-apple-system,sans-serif;
+    min-height:100vh;
+  }
+  /* ---------- Header ---------- */
+  header{
+    position:sticky; top:0; z-index:50;
+    background:rgba(17,18,20,.92); backdrop-filter:blur(8px);
+    border-bottom:1px solid #2b2e33;
+  }
+  .nav{
+    max-width:1000px; margin:0 auto; padding:14px 20px;
+    display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+  }
+  .logo{
+    font-size:1.25rem; font-weight:700; letter-spacing:.5px; color:var(--text);
+    display:flex; align-items:center; gap:10px;
+  }
+  .logo .count{font-weight:700}
+  .logo .count b{color:var(--gold)}
+  nav{display:flex; gap:8px; flex-wrap:wrap}
+  .tab-btn{
+    background:none; border:1px solid #3a3d43; color:var(--muted);
+    padding:8px 16px; border-radius:999px; cursor:pointer;
+    font-size:.92rem; transition:all .2s;
+  }
+  .tab-btn:hover{color:var(--text); border-color:var(--gold)}
+  .tab-btn.active{background:var(--gold); color:#151515; border-color:var(--gold); font-weight:600}
+
+  main{max-width:1000px; margin:0 auto; padding:28px 20px 80px}
+  .tab{display:none; animation:fade .25s ease}
+  .tab.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  /* ---------- Hero ---------- */
+  .hero{
+    background:linear-gradient(135deg,#1b1d22 0%,#23252b 100%);
+    border:1px solid #2e3138; border-radius:22px;
+    padding:44px 36px; text-align:center; margin-bottom:34px;
+    position:relative; overflow:hidden;
+  }
+  .hero::before{
+    content:"✂"; position:absolute; font-size:180px; opacity:.05;
+    right:-20px; top:-30px; transform:rotate(-20deg);
+  }
+  .hero h1{font-size:clamp(1.8rem,4vw,2.6rem); color:var(--gold2); margin-bottom:12px}
+  .hero p{color:var(--muted); max-width:520px; margin:0 auto 24px; line-height:1.6}
+  .hero .hours{
+    display:inline-block; background:var(--panel2); border:1px solid #3a3d43;
+    padding:8px 18px; border-radius:999px; font-size:.9rem; color:var(--muted);
+  }
+  .btn-gold{
+    background:var(--gold); color:#151515; border:none;
+    padding:13px 32px; border-radius:10px; cursor:pointer;
+    font-size:1rem; font-weight:700; transition:transform .15s, background .2s;
+  }
+  .btn-gold:hover{background:var(--gold2); transform:translateY(-2px)}
+
+  /* ---------- Sections ---------- */
+  h2{font-size:1.5rem; margin-bottom:6px; color:var(--gold2)}
+  .sub{color:var(--muted); margin-bottom:24px}
+  .cards{display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:16px}
+  .card{
+    background:var(--panel); border:1px solid #2e3138; border-radius:var(--radius);
+    padding:22px; transition:border-color .2s;
+  }
+  .card:hover{border-color:var(--gold)}
+  .card .icon{font-size:1.8rem; margin-bottom:10px}
+  .card h3{font-size:1.05rem; margin-bottom:6px}
+  .card .desc{color:var(--muted); font-size:.88rem; line-height:1.5; margin-bottom:12px; min-height:38px}
+  .card .price{color:var(--gold2); font-weight:700; font-size:1.1rem}
+  .card .price small{color:var(--muted); font-weight:400}
+
+  /* ---------- Form ---------- */
+  .form-wrap{max-width:560px; margin:0 auto}
+  .box{
+    background:var(--panel); border:1px solid #2e3138; border-radius:var(--radius);
+    padding:28px;
+  }
+  label{display:block; font-size:.85rem; font-weight:600; color:var(--muted); margin:18px 0 6px}
+  label:first-child{margin-top:0}
+  input,select{
+    width:100%; padding:12px 14px; border-radius:10px;
+    border:1px solid #3a3d43; background:var(--panel2); color:var(--text);
+    font-size:1rem; outline:none; transition:border-color .2s;
+  }
+  input:focus,select:focus{border-color:var(--gold)}
+  input[type=date]{color-scheme:dark}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+  .slots{
+    display:grid; grid-template-columns:repeat(auto-fill,minmax(80px,1fr)); gap:8px;
+    margin-top:10px;
+  }
+  .slot{
+    padding:9px 0; text-align:center; border-radius:8px; cursor:pointer;
+    background:var(--panel2); border:1px solid #3a3d43; font-size:.92rem; color:var(--text);
+    transition:all .15s; user-select:none;
+  }
+  .slot:hover{border-color:var(--gold)}
+  .slot.sel{background:var(--gold); color:#151515; font-weight:700; border-color:var(--gold)}
+  .slot.taken{opacity:.35; pointer-events:none; text-decoration:line-through}
+  .slot.rest{opacity:.25; pointer-events:none}
+  .hint{font-size:.85rem; color:var(--muted); margin-top:12px}
+  .submit-btn{
+    width:100%; margin-top:22px; padding:14px; font-size:1.05rem;
+    background:var(--gold); color:#151515; border:none; border-radius:10px;
+    font-weight:700; cursor:pointer; transition:background .2s;
+  }
+  .submit-btn:disabled{opacity:.5; cursor:not-allowed}
+  .submit-btn:hover:not(:disabled){background:var(--gold2)}
+
+  .msg{
+    margin-top:16px; padding:14px 16px; border-radius:10px;
+    display:none; line-height:1.5;
+  }
+  .msg.ok{display:block; background:rgba(62,207,142,.12); border:1px solid var(--green); color:var(--green)}
+  .msg.err{display:block; background:rgba(224,82,82,.12); border:1px solid var(--danger); color:#f0a0a0}
+  .msg b{color:var(--gold2)}
+
+  /* ---------- Lists ---------- */
+  .appt{
+    background:var(--panel); border:1px solid #2e3138; border-radius:var(--radius);
+    padding:18px 22px; margin-bottom:12px;
+    display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap;
+  }
+  .appt .info{line-height:1.6}
+  .appt .info .when{font-weight:700; color:var(--gold2)}
+  .appt .info .meta{color:var(--muted); font-size:.9rem}
+  .appt .actions{display:flex; gap:8px; align-items:center}
+  .code-chip{
+    background:var(--panel2); border:1px solid #3a3d43; padding:4px 12px;
+    border-radius:999px; font-size:.8rem; color:var(--muted);
+  }
+  .btn-sm{
+    padding:8px 16px; border-radius:8px; cursor:pointer; font-size:.88rem;
+    border:1px solid #3a3d43; background:var(--panel2); color:var(--text); transition:all .2s;
+  }
+  .btn-sm.del{color:var(--danger); border-color:#5a3a3a}
+  .btn-sm.del:hover{background:rgba(224,82,82,.15); border-color:var(--danger)}
+  .empty{
+    text-align:center; color:var(--muted); padding:48px 20px;
+    background:var(--panel); border:1px dashed #3a3d43; border-radius:var(--radius);
+  }
+
+  /* ---------- Admin ---------- */
+  .admin-gate{
+    max-width:380px; margin:40px auto; text-align:center;
+    background:var(--panel); border:1px solid #2e3138; border-radius:var(--radius); padding:32px;
+  }
+  .admin-gate input{margin-top:16px; text-align:center}
+  .summary{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:12px; margin-bottom:20px;
+  }
+  .summary .stat{
+    background:var(--panel); border:1px solid #2e3138; border-radius:var(--radius);
+    padding:16px; text-align:center;
+  }
+  .stat b{font-size:1.5rem; color:var(--gold2); display:block}
+
+  footer{
+    text-align:center; color:var(--muted); font-size:.85rem;
+    padding:26px 20px; border-top:1px solid #2b2e33;
+  }
+
+  @media (max-width:600px){
+    .hero{padding:32px 20px}
+    .grid2{grid-template-columns:1fr}
+    .box{padding:20px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="nav">
+    <div class="logo">✂ <span>Berber <b>Ahmet</b></span></div>
+    <nav>
+      <button class="tab-btn active" data-tab="ana">Ana Sayfa</button>
+      <button class="tab-btn" data-tab="randevu">Randevu Al</button>
+      <button class="tab-btn" data-tab="randevularim">Randevularım</button>
+      <button class="tab-btn" data-tab="admin">Berber Girişi</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <!-- ============ ANA SAYFA ============ -->
+  <section class="tab active" id="tab-ana">
+    <div class="hero">
+      <h1>Tıraşın Keyfine Çık 👔</h1>
+      <p>
+        Telefonla aramaya son! Web sitemizden birkaç tıkla randevunuzu alın,
+        dükkânda sıra beklemeyin.
+      </p>
+      <button class="btn-gold" data-goto="randevu">✂ &nbsp;Hemen Randevu Al</button>
+      <div><span class="hours" style="margin-top:22px">🕐 Hafta içi & Cumartesi: 09:00 – 21:00 &nbsp;•&nbsp; 🚫 Pazar kapalı</span></div>
+    </div>
+
+    <h2>Hizmetler & Fiyatlar</h2>
+    <p class="sub">Randevu sıranız hazırlanırken hangi hizmeti almak istediğinizi seçebilirsiniz.</p>
+    <div class="cards" id="services"></div>
+  </section>
+
+  <!-- ============ RANDEVU AL ============ -->
+  <section class="tab" id="tab-randevu">
+    <div class="form-wrap">
+      <h2>Randevu Al</h2>
+      <p class="sub">Bilgilerinizi doldurun, uygun bir saat seçin ve onay tıklayın.</p>
+      <div class="box">
+        <form id="bookForm">
+          <label for="fName">Adınız Soyadınız *</label>
+          <input id="fName" type="text" placeholder="ör. Ali Yılmaz" required maxlength="50" autocomplete="name">
+
+          <label for="fPhone">Telefon Numaranız *</label>
+          <input id="fPhone" type="tel" placeholder="ör. 0542 123 45 67" required maxlength="16" autocomplete="tel">
+          <div class="hint" style="margin-top:4px;margin-bottom:0">Aynı telefondan gelen randevuları "Randevularım" sayfasında görürsünüz.</div>
+
+          <label for="fService">Hizmet *</label>
+          <select id="fService" required>
+            <option value="">— Hizmet seçiniz —</option>
+          </select>
+
+          <div class="grid2">
+            <div>
+              <label for="fDate">Tarih *</label>
+              <input id="fDate" type="date" required>
+            </div>
+            <div>
+              <label style="margin-bottom:6px">Personel</label>
+              <select id="fBarber">
+                <option>Fark etmez</option>
+                <option>Ahmet</option>
+                <option>Mehmet</option>
+              </select>
+            </div>
+          </div>
+
+          <label>Saat Seçin *</label>
+          <div class="slots" id="slots"><div class="hint">Önce bir tarih seçin.</div></div>
+
+          <button type="submit" class="submit-btn">Randevuyu Onayla</button>
+          <div class="msg" id="bookMsg"></div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ RANDEVULARIM ============ -->
+  <section class="tab" id="tab-randevularim">
+    <h2>Randevularım</h2>
+    <p class="sub">Telefon numaranızla bakalım sizi bekleyen bir tıraş var mı…</p>
+    <div class="form-wrap" style="max-width:560px">
+      <div class="box" style="display:flex;gap:10px;align-items:center">
+        <input id="lookupPhone" type="tel" placeholder="Telefonunuz: 0542 123 45 67" style="flex:1;margin:0">
+        <button class="btn-gold" style="padding:12px 22px" onclick="renderMyAppts()">Ara 🔍</button>
+      </div>
+    </div>
+    <div id="myAppts" style="margin-top:24px"></div>
+  </section>
+
+  <!-- ============ ADMIN ============ -->
+  <section class="tab" id="tab-admin">
+    <div class="admin-gate" id="gate">
+      <h2 style="color:var(--gold2)">🔒 Berber Girişi</h2>
+      <p class="sub" style="margin-top:8px">Şifreyi girin (varsayılan: <b style="color:var(--gold2)">admin123</b>)</p>
+      <input id="adminPass" type="password" placeholder="Şifre" onkeydown="if(event.key==='Enter')tryAdmin()">
+      <br><br>
+      <button class="btn-gold" onclick="tryAdmin()">Giriş</button>
+    </div>
+    <div id="adminPanel" style="display:none">
+      <h2>📅 Tüm Randevular</h2>
+      <p class="sub">Müşteri randevularını buradan görüntüleyin ve yönetin.</p>
+      <div class="summary">
+        <div class="stat"><b id="cntToday">0</b> Bugün</div>
+        <div class="stat"><b id="cntUpcoming">0</b> Gelecek</div>
+        <div class="stat"><b id="cntAll">0</b> Toplam</div>
+      </div>
+      <div style="margin-bottom:16px">
+        <button class="btn-sm" onclick="exportCSV()">⬇ CSV indir</button>
+        <button class="btn-sm" onclick="adminLogout()">Çıkış</button>
+      </div>
+      <div id="adminList"></div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  Berber Ahmet © <span id="yr"></span> — Online Randevu Sistemi &nbsp;•&nbsp; 📍 Örnek Mah. Tıraş Sok. No:1, İstanbul
+</footer>
+
+<script>
+/* ================== AYARLAR — dükkanınıza göre değiştirin ================== */
+const CONFIG = {
+  shopName: "Berber Ahmet",
+  openHour: 9,     // 09:00
+  closeHour: 21,   // 21:00 (son 20:30)
+  slotMinutes: 30,
+  closedDays: [0], // 0 = Pazar kapalı
+  adminPass: "admin123",
+  services: [
+    { name:"Saç Kesimi",            icon:"✂",  price:400, desc:"Makas ve makine ile dilediğiniz modelde saç kesimi; frost, pompadour, fade dahil." },
+    { name:"Sakal Tıraşı",          icon:"🧔", price:250, desc:"Jilet veya makine ile sakal şekillendirme, keskin hat ve bitiş bakımı." },
+    { name:"Saç + Sakal Kombi",     icon:"✨", price:550, desc:"Saç kesimi ve sakal tıraşı birlikte; ustura ile hatlar, losyon ile bitiş." },
+    { name:"Kulak Ateşleme",        icon:"🔥", price:150, desc:"Geleneksel kulak ve burun tüyü temizliği (ateşleme yöntemi)." },
+    { name:"Yıkama & Şekillendirme",icon:"🚿", price:100, desc:"Şampuanla yıkama, fön ve pomada ile şekillendirme." },
+  ],
+};
+/* =========================================================================== */
+
+const services = CONFIG.services;
+
+/* ---------- Yardımcılar ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtDate = d => d.toLocaleDateString("tr-TR", {weekday:"long", day:"numeric", month:"long", year:"numeric"});
+const toLocalISO = d => d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const phoneDigits = p => (p||"").replace(/\D/g,"");
+const getAppts = () => JSON.parse(localStorage.getItem("berberAppointments") || "[]");
+const saveAppts = list => localStorage.setItem("berberAppointments", JSON.stringify(list));
+
+function genCode(){
+  return "BR-" + Math.random().toString(36).slice(2,6).toUpperCase();
+}
+function slotList(){
+  const out=[];
+  for(let h=CONFIG.openHour; h<CONFIG.closeHour; h++){
+    for(let m=0; m<60; m+=CONFIG.slotMinutes){
+      out.push(String(h).padStart(2,"0")+":"+String(m).padStart(2,"0"));
+    }
+  }
+  return out;
+}
+
+/* ---------- Tab sistemi ---------- */
+function switchTab(name){
+  document.querySelectorAll(".tab-btn").forEach(b=>b.classList.toggle("active", b.dataset.tab===name));
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  $("#tab-"+name).classList.add("active");
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+document.querySelectorAll(".tab-btn").forEach(b=> b.onclick = ()=>switchTab(b.dataset.tab));
+document.querySelectorAll("[data-goto]").forEach(b=> b.onclick = ()=>switchTab(b.dataset.goto));
+
+/* ---------- Hizmetleri göster ---------- */
+$("#services").innerHTML = services.map((s,i)=>`
+  <div class="card">
+    <div class="icon">${s.icon}</div>
+    <h3>${esc(s.name)}</h3>
+    <div class="desc">${esc(s.desc)}</div>
+    <div class="price">${s.price} ₺ <small>/ seans</small></div>
+  </div>`).join("");
+
+$("#fService").innerHTML += services.map(s=>
+  `<option value="${esc(s.name)}">${esc(s.name)} — ${s.price} ₺</option>`).join("");
+
+/* ---------- Tarih inputu ---------- */
+const dateInput = $("#fDate");
+dateInput.min = toLocalISO(new Date());
+dateInput.onchange = renderSlots;
+
+/* ---------- Saat slotları ---------- */
+function renderSlots(){
+  const box = $("#slots");
+  const val = dateInput.value;
+  if(!val){ box.innerHTML = `<div class="hint">Önce bir tarih seçin.</div>`; return; }
+  const d = new Date(val+"T00:00:00");
+  const day = d.getDay();
+  if(CONFIG.closedDays.includes(day)){
+    box.innerHTML = `<div class="hint" style="color:var(--danger)">Pazar günü kapalıyız. Başka bir gün seçebilirsiniz. 🙏</div>`;
+    return;
+  }
+  if(val < toLocalISO(new Date())){
+    box.innerHTML = `<div class="hint" style="color:var(--danger)">Geçmiş bir tarih seçemezsiniz.</div>`;
+    return;
+  }
+  const taken = new Set(getAppts().filter(a=>a.date===val).map(a=>a.time));
+  const now = new Date();
+  const todayISO = toLocalISO(now);
+  box.innerHTML = slotList().map(t=>{
+    let cls = "slot";
+    if(taken.has(t)) cls += " taken";
+    else if(val===todayISO){
+      const [h,m] = t.split(":");
+      if(h*60+ +m <= now.getHours()*60+now.getMinutes() + 30) cls += " rest";
+    }
+    return `<div class="${cls}" data-time="${t}" onclick="pickTime(this)">${t}</div>`;
+  }).join("");
+}
+function pickTime(el){
+  document.querySelectorAll(".slot.sel").forEach(s=>s.classList.remove("sel"));
+  el.classList.add("sel");
+}
+
+/* ---------- Form gönderme ---------- */
+$("#bookForm").addEventListener("submit", e=>{
+  e.preventDefault();
+  const msg = $("#bookMsg");
+  msg.className="msg"; msg.textContent="";
+
+  const name  = $("#fName").value.trim();
+  const phone = $("#fPhone").value.trim();
+  const serv  = $("#fService").value;
+  const date  = dateInput.value;
+  const barber= $("#fBarber").value;
+  const selSlot = document.querySelector(".slot.sel");
+
+  if(!name || phoneDigits(phone).length < 10){ msg.className="msg err"; msg.textContent="Lütfen geçerli bir isim ve telefon girin."; return; }
+  if(!date){ msg.className="msg err"; msg.textContent="Bir tarih seçin."; return; }
+  if(!selSlot){ msg.className="msg err"; msg.textContent="Bir saat seçin."; return; }
+  if(CONFIG.closedDays.includes(new Date(date+"T00:00:00").getDay())){
+    msg.className="msg err"; msg.textContent="Bu gün kapalıyız, lütfen başka gün seçin."; return;
+  }
+
+  const appts = getAppts();
+  const time = selSlot.dataset.time;
+  if(appts.some(a=>a.date===date && a.time===time)){
+    msg.className="msg err"; msg.textContent="Maalesef bu saat az önce alındı. Başka bir saat seçin.";
+    renderSlots(); return;
+  }
+
+  const code = genCode();
+  appts.push({ code, name, phone, service:serv, date, time, barber, created:Date.now() });
+  saveAppts(appts);
+
+  msg.className="msg ok";
+  msg.innerHTML = `✅ <b>Randevunuz alındı!</b><br>
+    🎫 Kod: <b>${code}</b> &nbsp;•&nbsp; 📅 ${fmtDate(new Date(date+"T00:00:00"))} — <b>${time}</b><br>
+    Berberinize ayrılınca bu kodu veya telefonunuzu göstermeniz yeterli.`;
+
+  document.querySelectorAll(".slot.sel").forEach(s=>s.classList.remove("sel"));
+  e.target.reset();
+  renderSlots();
+  updateTodayBadge();
+});
+
+/* ---------- Randevularım ---------- */
+function renderMyAppts(){
+  const box = $("#myAppts");
+  const ph = phoneDigits($("#lookupPhone").value);
+  if(ph.length < 10){
+    box.innerHTML = `<div class="empty">📞 Lütfen geçerli bir telefon numarası girin.</div>`;
+    return;
+  }
+  const matches = getAppts().filter(a=>phoneDigits(a.phone)===ph)
+    .sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+  if(matches.length===0){
+    box.innerHTML = `<div class="empty">Bu numara için kayıt bulunamadı.<br><br>
+      <button class="btn-gold" onclick="switchTab('randevu')">Randevu Al</button></div>`;
+    return;
+  }
+  box.innerHTML = matches.map(a=>`
+    <div class="appt">
+      <div class="info">
+        📅 <span class="when">${fmtDate(new Date(a.date+"T00:00:00"))} — ${a.time}</span><br>
+        <span class="meta">✂ ${esc(a.service)} • 💈 ${esc(a.barber||"Fark etmez")}</span>
+      </div>
+      <div class="actions">
+        <span class="code-chip">${a.code}</span>
+        <button class="btn-sm del" onclick="cancelAppt('${a.code}','${ph}')">İptal</button>
+      </div>
+    </div>`).join("");
+}
+
+function cancelAppt(code, ph){
+  if(!confirm("Bu randevuyu iptal etmek istediğinize emin misiniz?")) return;
+  saveAppts(getAppts().filter(a=>a.code!==code));
+  renderMyAppts();
+  updateTodayBadge();
+}
+
+/* ---------- Admin ---------- */
+let adminOn = false;
+function tryAdmin(){
+  const p = $("#adminPass").value;
+  if(p === CONFIG.adminPass){
+    adminOn = true;
+    $("#gate").style.display="none";
+    $("#adminPanel").style.display="block";
+    renderAdmin();
+  } else alert("Hatalı şifre!");
+}
+function adminLogout(){
+  adminOn=false;
+  $("#gate").style.display="block";
+  $("#adminPanel").style.display="none";
+  $("#adminPass").value="";
+}
+function renderAdmin(){
+  const appts = getAppts().sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time));
+  const today = toLocalISO(new Date());
+  $("#cntToday").textContent = appts.filter(a=>a.date===today).length;
+  $("#cntUpcoming").textContent = appts.filter(a=>a.date>=today).length;
+  $("#cntAll").textContent = appts.length;
+
+  if(appts.length===0){
+    $("#adminList").innerHTML = `<div class="empty">Henüz randevu yok. 📭</div>`; return;
+  }
+  const markup = appts.map(a=>`
+    <div class="appt">
+      <div class="info">
+        <span class="when">${fmtDate(new Date(a.date+"T00:00:00"))} — ${a.time}</span><br>
+        <span class="meta">👤 ${esc(a.name)} • 📞 ${esc(a.phone)} • ✂ ${esc(a.service)} • 💈 ${esc(a.barber||"Fark etmez")}</span>
+      </div>
+      <div class="actions">
+        <span class="code-chip">${a.code}</span>
+        <button class="btn-sm del" onclick="adminDel('${a.code}')">Sil</button>
+      </div>
+    </div>`).join("");
+  $("#adminList").innerHTML = markup;
+}
+function adminDel(code){
+  if(!confirm("Bu randevu silinsin mi?")) return;
+  saveAppts(getAppts().filter(a=>a.code!==code));
+  renderAdmin(); updateTodayBadge();
+}
+function exportCSV(){
+  const rows = [["Kod","İsim","Telefon","Hizmet","Tarih","Saat","Koltuk"]];
+  getAppts().forEach(a=>rows.push([a.code,a.name,a.phone,a.service,a.date,a.time,a.barber]));
+  const csv = "\ufeff" + rows.map(r=>r.map(c=>`"${c}"`).join(";")).join("\n");
+  const url = URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
+  const a = document.createElement("a");
+  a.href=url; a.download="randevular.csv"; a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* ---------- Header'daki bugünkü randevu sayacı ---------- */
+function updateTodayBadge(){
+  const today = toLocalISO(new Date());
+  const n = getAppts().filter(a=>a.date===today).length;
+  const logo = document.querySelector(".logo");
+  let badge = document.getElementById("todayBadge");
+  if(!badge){
+    badge = document.createElement("span");
+    badge.id="todayBadge";
+    badge.style.cssText="font-size:.78rem;color:var(--muted);background:var(--panel2);border:1px solid #3a3d43;padding:2px 10px;border-radius:999px";
+    logo.appendChild(badge);
+  }
+  badge.textContent = n>0 ? ` bugün ${n} randevu 📋` : "";
+}
+
+/* Başlangıç */
+$("#yr").textContent = new Date().getFullYear();
+dateInput.value = toLocalISO(new Date());
+renderSlots();
+updateTodayBadge();
+</script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+# Render.com deploy ayarı — GitHub deposundan otomatik kurulum
+services:
+  - type: web
+    name: berber-randevu
+    runtime: node
+    plan: free
+    buildCommand: "npm install"
+    startCommand: "npm start"
+    healthCheckPath: /api/health
+    envVars:
+      - key: STORAGE
+        value: turso
+      # Aşağıdaki 3 değeri Render panelinde (Environment → Environment Variables)
+      # siz girin; repoda asla plaintext tutulmaz:
+      - key: ADMIN_PASS           # berber paneli için GÜÇLÜ bir şifre belirleyin
+        sync: false
+      - key: TURSO_DATABASE_URL   # Turso panelinden: https://<db>.turso.io
+        sync: false
+      - key: TURSO_AUTH_TOKEN     # Turso panelinden: token oluşturun
+        sync: false
