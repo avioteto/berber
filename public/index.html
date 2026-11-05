@@ -216,7 +216,7 @@
   <!-- ============ ANA SAYFA ============ -->
   <section class="tab active" id="tab-ana">
     <div class="hero">
-      <h1 id="heroTitle">Tıraşın Keyfine Çık 👔</h1>
+      <h1 id="heroTitle">Değişim Hair Studio</h1>
       <p>
         Telefonla aramaya son! Web sitemizden birkaç tıkla randevunuzu alın,
         dükkânda sıra beklemeyin.
@@ -413,7 +413,7 @@ async function loadConfig(){
   $("#hoursChip").textContent =
     `🕐 Her gün: ${String(CONFIG.openHour).padStart(2,"0")}:00 – ${String(CONFIG.closeHour).padStart(2,"0")}:00` +
     (closedTxt ? `  •  🚫 ${closedTxt} kapalı` : "");
-  $("#heroTitle").textContent = dName + " — Tıraşın Keyfine Çık 👔";
+  $("#heroTitle").textContent = dName;
 
   $("#services").innerHTML = CONFIG.services.map(s=>`
     <div class="card">
