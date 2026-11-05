@@ -19,6 +19,7 @@ const express = require("express");
 const fs = require("fs");
 const fsp = require("fs/promises");
 const path = require("path");
+const crypto = require("crypto");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -27,7 +28,7 @@ const PORT = process.env.PORT || 3000;
 const CONFIG = {
   shopName: "Değişim Hair Studio",
   openHour: 9,        // 09:00
-  closeHour: 21,      // 21:00 (son randevu 20:30)
+  closeHour: 21,      // 21:00 (son randevu 20:15)
   slotMinutes: 45,
   closedDays: [0],    // 0 = Pazar kapalı — birden fazla: [0, 6]
   adminPass: process.env.ADMIN_PASS || "admin123",
@@ -60,6 +61,7 @@ function slotList() {
   }
   return out;
 }
+
 function isValidSlotDate(dateStr) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr || "")) return false;
   const d = new Date(dateStr + "T00:00:00");
@@ -75,7 +77,7 @@ function isValidSlotDate(dateStr) {
 
 /* --- 1) Yerel JSON dosya deposu (StorAGED file) --- */
 function createFileStore() {
-  let db = { appointments: [], blocked: [] };
+  let db = { appointments: [], blocked: [], settings: {} };
 
   function init() {
     try {
@@ -83,10 +85,11 @@ function createFileStore() {
         const parsed = JSON.parse(fs.readFileSync(DB_FILE, "utf8"));
         db.appointments = Array.isArray(parsed.appointments) ? parsed.appointments : [];
         db.blocked      = Array.isArray(parsed.blocked)      ? parsed.blocked      : [];
+        db.settings     = (parsed.settings && typeof parsed.settings === "object") ? parsed.settings : {};
       }
     } catch (e) {
       console.error("DB okunamadı, sıfırlanıyor:", e.message);
-      db = { appointments: [], blocked: [] };
+      db = { appointments: [], blocked: [], settings: {} };
     }
   }
 
@@ -118,6 +121,12 @@ function createFileStore() {
       if (db.blocked.length === before) return false;
       await persist(); return true;
     },
+    async getSetting(key)        { return db.settings[key] ?? null; },
+    async setSetting(key, value) {
+      if (value === null) delete db.settings[key];
+      else db.settings[key] = value;
+      await persist();
+    },
   };
 }
 
@@ -143,6 +152,10 @@ async function createTursoStore() {
       date TEXT NOT NULL,
       time TEXT NOT NULL,
       PRIMARY KEY (date, time)
+    );
+    CREATE TABLE IF NOT EXISTS settings (
+      key   TEXT PRIMARY KEY,
+      value TEXT NOT NULL
     );
   `);
 
@@ -182,6 +195,21 @@ async function createTursoStore() {
       });
       return rs.rowsAffected > 0;
     },
+    async getSetting(key) {
+      const rs = await client.execute({ sql: "SELECT value FROM settings WHERE key = ?", args: [key] });
+      return rs.rows.length ? rs.rows[0].value : null;
+    },
+    async setSetting(key, value) {
+      if (value === null) {
+        await client.execute({ sql: "DELETE FROM settings WHERE key = ?", args: [key] });
+      } else {
+        await client.execute({
+          sql: `INSERT INTO settings (key, value) VALUES (?, ?)
+                ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+          args: [key, value],
+        });
+      }
+    },
     client, // yönetim/yardımcı işlemler için
   };
 }
@@ -199,7 +227,56 @@ async function initStorage() {
   }
 }
 
+/* ---------- Şifre hash'leme & doğrulama ---------- */
+function makeHash(pass) {
+  const salt = crypto.randomBytes(16).toString("hex");
+  const hash = crypto.scryptSync(pass, salt, 32).toString("hex");
+  return `s1:${salt}:${hash}`;
+}
+
+function checkHash(pass, stored) {
+  try {
+    const [ver, salt, hash] = String(stored).split(":");
+    if (ver !== "s1" || !salt || !hash) return false;
+    const candidate = crypto.scryptSync(pass, salt, 32);
+    return crypto.timingSafeEqual(Buffer.from(hash, "hex"), candidate);
+  } catch (e) { return false; }
+}
+
+/* Aktif şifre: önce veritabanındaki özel şifre, yoksa Render'daki ADMIN_PASS */
+async function verifyAdminPass(candidate) {
+  if (!candidate) return false;
+  const stored = await storage.getSetting("admin_pass");
+  if (stored) return checkHash(candidate, stored);
+  return candidate === CONFIG.adminPass;
+}
+
+/* ---------- Admin girişine deneme kilidi ----------
+   5 hatalı deneme → IP 10 dakika kilitlenir (uygulama içi hafıza) */
+const MAX_FAILS = 5;
+const LOCK_MS = 10 * 60 * 1000;
+const failLog = new Map(); // ip -> { count, lockedUntil }
+
+function adminLockRemainingMs(ip) {
+  const rec = failLog.get(ip);
+  if (rec && rec.lockedUntil && Date.now() < rec.lockedUntil) return rec.lockedUntil - Date.now();
+  return 0;
+}
+function recordAdminFail(ip) {
+  const rec = failLog.get(ip) || { count: 0, lockedUntil: 0 };
+  rec.count++;
+  if (rec.count >= MAX_FAILS) { rec.lockedUntil = Date.now() + LOCK_MS; rec.count = 0; }
+  failLog.set(ip, rec);
+  // hafıza temizliği: süresi geçmiş kilitleri kaldır
+  const now = Date.now();
+  for (const [key, r] of failLog) {
+    if (r.lockedUntil && r.lockedUntil < now) failLog.delete(key);
+  }
+}
+function recordAdminSuccess(ip) { failLog.delete(ip); }
+
 /* ---------- Middleware ---------- */
+app.set("trust proxy", 1); // Render arkasında X-Forwarded-For ile gerçek IP alınır
 app.use(express.json());
 
 /* ---------- Statik site ---------- */
@@ -340,9 +417,22 @@ app.delete("/api/appointments/:code", async (req, res) => {
 
 /* ================== ADMİN API ================== */
 
-function adminAuth(req, res, next) {
-  if (req.get("x-admin-pass") !== CONFIG.adminPass)
-    return res.status(401).json({ error: "Yetkisiz. Şifre hatalı." });
+async function adminAuth(req, res, next) {
+  const ip = req.ip || req.socket?.remoteAddress || "bilinmeyen";
+  const lockMs = adminLockRemainingMs(ip);
+  if (lockMs > 0)
+    return res.status(429).json({
+      error: `Çok fazla hatalı deneme. Hesap bu IP için ~${Math.ceil(lockMs / 60000)} dk kilitli.`,
+    });
+
+  const candidate = req.get("x-admin-pass") || "";
+  if (!(await verifyAdminPass(candidate))) {
+    recordAdminFail(ip);
+    const rec = failLog.get(ip);
+    const left = Math.max(1, MAX_FAILS - (rec ? rec.count : 0));
+    return res.status(401).json({ error: `Hatalı şifre. Kalan deneme hakkı: ${left}.` });
+  }
+  recordAdminSuccess(ip);
   next();
 }
 
@@ -393,6 +483,37 @@ app.delete("/api/admin/blocked", adminAuth, async (req, res) => {
       return res.status(400).json({ error: "Geçersiz saat." });
     await storage.deleteBlocked(date, time);
     res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+/* Berber: panel şifresini uygulamadan değiştirme */
+app.post("/api/admin/settings/password", adminAuth, async (req, res) => {
+  try {
+    const { current, newPassword } = req.body || {};
+    if (!(await verifyAdminPass(current)))
+      return res.status(400).json({ error: "Şu anki şifre hatalı." });
+    if (!newPassword || String(newPassword).length < 6)
+      return res.status(400).json({ error: "Yeni şifre en az 6 karakter olmalı." });
+    await storage.setSetting("admin_pass", makeHash(String(newPassword)));
+    res.json({ ok: true, note: "Yeni şifre anında aktif. Render'daki ADMIN_PASS artık devre dışı (sıfırlama anahtarı olarak saklanır)." });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+/* Unutulan özel şifreyi, Render'daki ADMIN_PASS ile sıfırlama */
+app.post("/api/admin/settings/password-reset", async (req, res) => {
+  try {
+    const ip = req.ip || req.socket?.remoteAddress || "bilinmeyen";
+    const lockMs = adminLockRemainingMs(ip);
+    if (lockMs > 0)
+      return res.status(429).json({ error: `Çok fazla hatalı deneme. ~${Math.ceil(lockMs / 60000)} dk bekleyin.` });
+
+    const candidate = req.get("x-admin-pass") || "";
+    if (candidate !== CONFIG.adminPass) {
+      recordAdminFail(ip);
+      return res.status(401).json({ error: "Sıfırlama anahtarı (Render'daki ADMIN_PASS) hatalı." });
+    }
+    await storage.setSetting("admin_pass", null); // özel şifreyi kaldır → env şifresi devreye döner
+    res.json({ ok: true, note: "Şifre sıfırlandı. Artık Render'daki ADMIN_PASS ile giriş yapabilirsiniz." });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
