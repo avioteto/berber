@@ -492,7 +492,10 @@ $("#bookForm").addEventListener("submit", async e=>{
     msg.className="msg ok";
     msg.innerHTML = `✅ <b>Randevunuz alındı!</b><br>
       🎫 Kod: <b>${esc(appt.code)}</b> &nbsp;•&nbsp; 📅 ${fmtDate(appt.date)} — <b>${esc(appt.time)}</b><br>
-      Dükkâna geldiğinizde bu kodu ya da telefonunuzu göstermeniz yeterli.`;
+      Dükkâna geldiğinizde bu kodu ya da telefonunuzu göstermeniz yeterli.
+      <div style="margin-top:10px;font-size:1.3rem;font-weight:800;letter-spacing:1px;color:var(--gold2)">
+        💰 NAKİT GETİRMEYİ UNUTMAYIN!
+      </div>`;
     document.querySelectorAll(".slot.sel").forEach(s=>s.classList.remove("sel"));
     e.target.reset();
     dateInput.value = toLocalISO(new Date()); // varsayılana dön
