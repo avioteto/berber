@@ -25,13 +25,13 @@ const PORT = process.env.PORT || 3000;
 
 /* ================== AYARLAR — dükkanınıza göre değiştirin ================== */
 const CONFIG = {
-  shopName: "Berber Ahmet",
+  shopName: "Değişim Hair Studio",
   openHour: 9,        // 09:00
   closeHour: 21,      // 21:00 (son randevu 20:30)
-  slotMinutes: 30,
+  slotMinutes: 45,
   closedDays: [0],    // 0 = Pazar kapalı — birden fazla: [0, 6]
   adminPass: process.env.ADMIN_PASS || "admin123",
-  barbers: ["Fark etmez", "Ahmet", "Mehmet"],
+  barbers: ["Mahmut"],
   services: [
     { name: "Saç Kesimi",             icon: "✂",  price: 400, desc: "Makas ve makine ile dilediğiniz modelde saç kesimi; fade, pompadour ve trend kesimler dahil." },
     { name: "Sakal Tıraşı",           icon: "🧔", price: 250, desc: "Jilet veya makine ile sakal şekillendirme, keskin hat ve bitiş bakımı." },
