@@ -380,7 +380,7 @@ async function loadConfig(){
   $("#hoursChip").textContent =
     `🕐 Her gün: ${String(CONFIG.openHour).padStart(2,"0")}:00 – ${String(CONFIG.closeHour).padStart(2,"0")}:00` +
     (closedTxt ? `  •  🚫 ${closedTxt} kapalı` : "");
-  $("#heroTitle").textContent = dName + "'e hoş geldiniz 👔";
+  $("#heroTitle").textContent = dName + " — Tıraşın Keyfine Çık 👔";
 
   $("#services").innerHTML = CONFIG.services.map(s=>`
     <div class="card">
