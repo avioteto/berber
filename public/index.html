@@ -321,6 +321,31 @@
         <div class="hint">Açık bir saate tıkla → kapatılır. Kapalı bir saate tıkla → tekrar açılır. Dolu (müşterili) veya geçmiş saatler değiştirilemez.</div>
       </div>
 
+      <div class="box" style="margin-bottom:20px">
+        <h3 style="color:var(--gold2);margin-bottom:4px">🔑 Panel Şifresi</h3>
+        <p class="sub" style="margin:0 0 12px">Berber giriş şifresini buradan değiştir. Yeni şifre veritabanına <b>hash'li</b> kaydedilir ve anında aktif olur.</p>
+        <label style="margin-top:0">Şu anki şifre</label>
+        <input id="passCurrent" type="password" autocomplete="current-password">
+
+        <div class="grid2">
+          <div>
+            <label>Yeni şifre</label>
+            <input id="passNew" type="password" autocomplete="new-password">
+          </div>
+          <div>
+            <label>Yeni şifre (tekrar)</label>
+            <input id="passNew2" type="password" autocomplete="new-password">
+          </div>
+        </div>
+
+        <button class="submit-btn" style="margin-top:16px" onclick="changePass()">Şifreyi Değiştir</button>
+        <div class="hint" style="margin-top:10px">
+          Şifreyi unutursan panik yok: Render panelindeki <b>ADMIN_PASS</b> değeri sıfırlama anahtarı olarak çalışır:
+        </div>
+        <button class="btn-sm" style="margin-top:10px" onclick="resetPass()">↩ Render şifresine dön (sıfırlama)</button>
+        <div class="msg" id="passMsg"></div>
+      </div>
+
       <div id="adminList"></div>
     </div>
   </section>
@@ -552,7 +577,7 @@ async function loadAdmin(silent){
   try{
     lastAdminList = await api("/api/admin/appointments", { headers:{"x-admin-pass":adminPass} });
   }catch(e){
-    if(!silent) alert(e.status === 401 ? "Hatalı şifre!" : e.message);
+    if(!silent) alert(e.message || "Giriş başarısız."); // 401 veya kilit (429) mesajı sunucudan gelir
     return;
   }
   $("#gate").style.display="none";
@@ -679,6 +704,36 @@ async function toggleDayBlock(){
       });
     }
     loadBlocks();
+  }catch(e){ alert(e.message); }
+}
+
+/* ---------- Berber: panel şifresi yönetimi ---------- */
+async function changePass(){
+  const msg = $("#passMsg");
+  msg.className = "msg"; msg.textContent = "";
+  const cur = $("#passCurrent").value, p1 = $("#passNew").value, p2 = $("#passNew2").value;
+  if(!cur){ msg.className="msg err"; msg.textContent="Şu anki şifreyi girin."; return; }
+  if(p1.length < 6){ msg.className="msg err"; msg.textContent="Yeni şifre en az 6 karakter olmalı."; return; }
+  if(p1 !== p2){ msg.className="msg err"; msg.textContent="Yeni şifreler eşleşmiyor."; return; }
+  try{
+    await api("/api/admin/settings/password", {
+      method: "POST",
+      headers: {"x-admin-pass": adminPass},
+      body: JSON.stringify({ current: cur, newPassword: p1 }),
+    });
+    adminPass = p1; // bu oturumda yeni şifreyle devam
+    msg.className = "msg ok";
+    msg.textContent = "✅ Şifre değiştirildi, anında aktif. Bir dahaki girişte yeni şifrenizle girin.";
+    $("#passCurrent").value = $("#passNew").value = $("#passNew2").value = "";
+  }catch(e){ msg.className="msg err"; msg.textContent = e.message; }
+}
+
+async function resetPass(){
+  const rp = prompt("Sıfırlama anahtarı: Render panelindeki ADMIN_PASS değerini girin:");
+  if(!rp) return;
+  try{
+    await api("/api/admin/settings/password-reset", { method:"POST", headers:{"x-admin-pass": rp} });
+    alert("✅ Şifre sıfırlandı. Artık Render'daki ADMIN_PASS ile giriş yapabilirsiniz.");
   }catch(e){ alert(e.message); }
 }
 
