@@ -53,12 +53,13 @@ const toLocalISO = d =>
 
 function slotList() {
   const out = [];
-  for (let h = CONFIG.openHour; h < CONFIG.closeHour; h++)
-    for (let m = 0; m < 60; m += CONFIG.slotMinutes)
-      out.push(String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0"));
+  const start = CONFIG.openHour * 60;                  // dakika cinsinden
+  const end   = CONFIG.closeHour * 60;
+  for (let t = start; t + CONFIG.slotMinutes <= end; t += CONFIG.slotMinutes) {
+    out.push(String(Math.floor(t / 60)).padStart(2, "0") + ":" + String(t % 60).padStart(2, "0"));
+  }
   return out;
 }
-
 function isValidSlotDate(dateStr) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr || "")) return false;
   const d = new Date(dateStr + "T00:00:00");
