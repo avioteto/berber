@@ -206,6 +206,7 @@
       <button class="tab-btn active" data-tab="ana">Ana Sayfa</button>
       <button class="tab-btn" data-tab="randevu">Randevu Al</button>
       <button class="tab-btn" data-tab="randevularim">Randevularım</button>
+      <button class="tab-btn" data-tab="kvkk">Gizlilik</button>
       <button class="tab-btn" data-tab="admin">Berber Girişi</button>
     </nav>
   </div>
@@ -242,7 +243,8 @@
 
           <label for="fPhone">Telefon Numaranız *</label>
           <input id="fPhone" type="tel" placeholder="ör. 0542 123 45 67" required maxlength="16" autocomplete="tel">
-          <div class="hint" style="margin-top:4px;margin-bottom:0">Aynı telefondan verilen randevuları "Randevularım" sayfasında görürsünüz.</div>
+          <div class="hint" style="margin-top:4px;margin-bottom:0">Aynı telefondan verilen randevuları "Randevularım" sayfasında görürsünüz. Verileriniz yalnızca randevu işleminde kullanılır, üçüncü kişilerle paylaşılmaz —
+            <a href="#" onclick="switchTab('kvkk');return false" style="color:var(--gold2)">🔒 Gizlilik</a></div>
 
           <label for="fService">Hizmet *</label>
           <select id="fService" required>
@@ -350,6 +352,43 @@
     </div>
   </section>
 
+  <!-- ============ GİZLİLİK / KVKK ============ -->
+  <section class="tab" id="tab-kvkk">
+    <h2>🔒 Gizlilik — KVKK Aydınlatma Metni</h2>
+    <p class="sub">6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") kapsamında bilgilendirme • Son güncelleme: Kasım 2026</p>
+    <div class="box" style="max-width:820px;line-height:1.9;font-size:.95rem">
+
+      <p><b style="color:var(--gold2)">1. Veri Sorumlusu</b><br>
+      Değişim Hair Studio — Pirler Mah. Adnan Menderes Blv. No:46/C, Merkez/Kütahya •
+      📞 0544 866 37 24 • 📷 @degisim_hair_studyo</p>
+
+      <p><b style="color:var(--gold2)">2. İşlenen Kişisel Veriler</b><br>
+      Randevu formu aracılığıyla yalnızca: ad-soyad, telefon numarası, seçilen hizmet, tarih/saat tercihi ve (istenirse) personel tercihi.</p>
+
+      <p><b style="color:var(--gold2)">3. İşleme Amacı</b><br>
+      Kişisel verileriniz <u>yalnızca</u> randevu talebinizin kaydı, hatırlatılması ve dükkâna geldiğinizde işlemin yürütülmesi amacıyla işlenmektedir. Ürün tanıtımı, otomatik pazarlama veya profilleme yapılmamaktadır.</p>
+
+      <p><b style="color:var(--gold2)">4. Hukuki Sebep</b><br>
+      KVKK m.5/2-(c): Ödeme/rezervasyonla ilgili sözleşmenin kurulması veya ifası ile doğrudan ilgili olup, sözleşmenin gerektirdiği temel bilgilere dayanmaktadır. Bu nedenle açık rıza aranmaz; ancak veri işleme hukuka uygun ve ölçülüdür.</p>
+
+      <p><b style="color:var(--gold2)">5. Aktarım</b><br>
+      Verileriniz üçüncü kişilere <u>satılmamakta, pazarlanmamakta ve reklam/pazarlama amacıyla paylaşılmamaktadır</u>. Veri yalnızca sitedeki randevu sistemini çalıştırmakla sınırlı olarak, güvenli veritabanı (Turso/Render bulut altyapısı) üzerinden %100 şifreli bağlantıyla (HTTPS) saklanmaktadır.</p>
+
+      <p><b style="color:var(--gold2)">6. Saklama Süresi</b><br>
+      Randevu gerçekleştikten sonra veriler, yasal saklama gereksinimi olmadığı sürece gerektiğinde dükkân yönetimi tarafından silinir. Hukuki/geçerli bir gerekçe yoksa kayıt süresiz tutulmaz.</p>
+
+      <p><b style="color:var(--gold2)">7. KVKK m.11 Kapsamındaki Haklarınız</b><br>
+      Kişisel verilerinizin işlenip işlenmediğini öğrenme, bunlarla ilgili bilgi talep etme, işleniş amacını öğrenme, eksik/yanlış işlenmişse düzeltilmesini isteme, silinmesini veya yıkılmasını isteme, üçüncü kişilere aktarıldıysa bildirenleri bilme ve bilgilendirme talep etme haklarına sahipsiniz.</p>
+
+      <p><b style="color:var(--gold2)">8. Başvuru</b><br>
+      Yukarıdaki haklarınızı kullanmak, verilerinizin silinmesini istemek veya konuyla ilgili herhangi bir soru sormak için dükkân telefonumuz (0544 866 37 24) üzerinden bize ulaşabilirsiniz. Talepleriniz en geç 30 gün içinde yanıtlanır.</p>
+
+      <div class="hint" style="margin-top:20px">
+        ℹ️ Bu metin, web sitesi üzerinden alınan randevular için geçerlidir. Dükkâda doğrudan gelerek bırakılan bilgiler için de benzer ilkeler uygulanır.
+      </div>
+    </div>
+  </section>
+
 </main>
 
 <footer>
@@ -361,6 +400,9 @@
     📍 Pirler Mah. Adnan Menderes Blv. No:46/C, Merkez/Kütahya &nbsp;•&nbsp;
     📷 <a href="https://instagram.com/degisim_hair_studyo" target="_blank" rel="noopener"
           style="color:var(--gold2);text-decoration:none">@degisim_hair_studyo</a>
+  </div>
+  <div style="margin-top:6px">
+    <a href="#" onclick="switchTab('kvkk');return false" style="color:var(--muted)">🔒 Gizlilik / KVKK Aydınlatma Metni</a>
   </div>
 </footer>
 
