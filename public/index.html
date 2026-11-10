@@ -643,7 +643,6 @@ async function loadAdmin(silent){
         <span class="meta">👤 ${esc(a.name)} • 📞 ${esc(a.phone)} • ✂ ${esc(a.service)} • 💈 ${esc(a.barber)}</span>
       </div>
       <div class="actions">
-        <span class="code-chip">${esc(a.code)}</span>
         <button class="btn-sm del" onclick="adminDel('${a.code}')">Sil</button>
       </div>
     </div>`).join("");
